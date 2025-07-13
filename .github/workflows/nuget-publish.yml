@@ -3,10 +3,6 @@ name: Publish NuGet Packages
 on:
   push:
     branches: [ main, develop ]
-    paths:
-      - '**/*.csproj'
-      - '**/src/**'
-      - '!**/test/**'
   workflow_dispatch:
     inputs:
       version_override:
