@@ -13,6 +13,12 @@ on:
         description: 'Force publish even if version exists'
         required: false
         type: boolean
+
+permissions:
+  contents: write    # For creating releases
+  packages: write    # For publishing to GitHub Packages
+  actions: read      # For accessing workflow artifacts
+  checks: read       # For status checks
         default: false
 
 env:
