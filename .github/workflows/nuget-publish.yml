@@ -138,8 +138,14 @@ jobs:
 
     - name: Publish to NuGet.org
       run: |
+        if [ -z "${{ secrets.NUGET_API_KEY }}" ]; then
+          echo "⚠️ NUGET_API_KEY not configured - skipping NuGet.org publishing"
+          echo "To enable NuGet.org publishing, add NUGET_API_KEY to repository secrets"
+          exit 0
+        fi
+        
         for package in ./nupkgs/*.nupkg; do
-          echo "📤 Publishing $(basename $package)"
+          echo "📤 Publishing $(basename $package) to NuGet.org"
           
           if [ "${{ github.event.inputs.force_publish }}" = "true" ]; then
             SKIP_DUPLICATE=""
@@ -199,14 +205,27 @@ jobs:
 
     - name: Publish to GitHub Packages
       run: |
+        # Use PACKAGES_PAT if available, otherwise fall back to GITHUB_TOKEN
+        if [ -n "${{ secrets.PACKAGES_PAT }}" ]; then
+          API_KEY="${{ secrets.PACKAGES_PAT }}"
+          echo "🔑 Using PACKAGES_PAT for authentication"
+        else
+          API_KEY="${{ secrets.GITHUB_TOKEN }}"
+          echo "🔑 Using GITHUB_TOKEN for authentication (may have limited permissions)"
+        fi
+        
         for package in ./nupkgs/*.nupkg; do
           echo "📤 Publishing $(basename $package) to GitHub Packages"
           
           dotnet nuget push "$package" \
-            --api-key ${{ secrets.GITHUB_TOKEN }} \
-            --source https://nuget.pkg.github.com/Third-Opinion/index.json \
+            --api-key "$API_KEY" \
+            --source "https://nuget.pkg.github.com/Third-Opinion/index.json" \
             --skip-duplicate \
-            --timeout 300
+            --timeout 300 || {
+            echo "❌ Failed to publish $(basename $package)"
+            echo "This may be due to insufficient token permissions or package already exists"
+            # Continue with other packages
+          }
         done
 
   notification:
