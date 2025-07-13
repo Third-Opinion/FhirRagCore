@@ -11,12 +11,12 @@ public interface ILlmService
     /// Generates a response from the LLM
     /// </summary>
     Task<LlmResponse> GenerateResponseAsync(LlmRequest request, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Generates embeddings for text
     /// </summary>
     Task<float[]> GenerateEmbeddingAsync(string text, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Checks if the LLM service is healthy
     /// </summary>
@@ -32,12 +32,12 @@ public interface IOrchestrationService
     /// Starts a new workflow
     /// </summary>
     Task<OrchestrationResult> StartWorkflowAsync(WorkflowRequest request, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Gets the status of a workflow
     /// </summary>
     Task<OrchestrationResult> GetWorkflowStatusAsync(string workflowId, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Cancels a running workflow
     /// </summary>

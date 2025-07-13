@@ -193,7 +193,7 @@ public static class AuthenticationHelpers
 
             var expectedData = $"{identifier}:{timestamp}";
             var expectedHash = ComputeHash(expectedData);
-            
+
             return string.Equals(parts[1], expectedHash, StringComparison.Ordinal);
         }
         catch
@@ -211,7 +211,7 @@ public static class AuthenticationHelpers
             "monkey", "dragon", "princess", "hello"
         };
 
-        return commonPatterns.Any(pattern => 
+        return commonPatterns.Any(pattern =>
             password.Contains(pattern, StringComparison.OrdinalIgnoreCase));
     }
 
@@ -347,7 +347,7 @@ public class SecurityAuditLogger
             var logMessage = "Security Event: {EventType} by {UserId} in {TenantId} - {Success}";
             var logLevel = entry.Success ? LogLevel.Information : LogLevel.Warning;
 
-            _logger.Log(logLevel, logMessage, 
+            _logger.Log(logLevel, logMessage,
                 entry.EventType, entry.UserId, entry.TenantId, entry.Success ? "Success" : "Failed");
 
             // In production, this would also write to a secure audit log store
@@ -380,7 +380,7 @@ public class SecurityAuditLogger
     /// <summary>
     /// Logs an authorization event
     /// </summary>
-    public void LogAuthorizationEvent(string userId, string tenantId, string resourceType, string resourceId, 
+    public void LogAuthorizationEvent(string userId, string tenantId, string resourceType, string resourceId,
         string action, bool success, string? failureReason = null)
     {
         var entry = new SecurityAuditEntry

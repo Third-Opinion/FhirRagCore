@@ -52,7 +52,7 @@ public static class ServiceCollectionExtensions
     /// Adds infrastructure services with custom AWS configuration
     /// </summary>
     public static IServiceCollection AddInfrastructureServices(
-        this IServiceCollection services, 
+        this IServiceCollection services,
         IConfiguration configuration,
         Action<Amazon.Extensions.NETCore.Setup.AWSOptions>? awsOptionsAction = null)
     {
@@ -63,7 +63,7 @@ public static class ServiceCollectionExtensions
             awsOptionsAction(awsOptions);
             services.AddDefaultAWSOptions(awsOptions);
         }
-        
+
         services.AddAWSService<IAmazonS3>();
         services.AddAWSService<IAmazonDynamoDB>();
         services.AddAWSService<IAmazonOpenSearchService>();

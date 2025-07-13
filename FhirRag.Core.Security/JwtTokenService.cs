@@ -38,7 +38,7 @@ public class JwtTokenService
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _tokenHandler = new JwtSecurityTokenHandler();
-        
+
         ValidateConfiguration();
         _validationParameters = CreateValidationParameters();
     }
@@ -86,8 +86,8 @@ public class JwtTokenService
             );
 
             var tokenString = _tokenHandler.WriteToken(token);
-            
-            _logger.LogDebug("Created JWT token for user {UserId} with expiration {Expiration}", 
+
+            _logger.LogDebug("Created JWT token for user {UserId} with expiration {Expiration}",
                 context.UserId, token.ValidTo);
 
             return tokenString;
@@ -114,7 +114,7 @@ public class JwtTokenService
             }
 
             var result = await _tokenHandler.ValidateTokenAsync(token, _validationParameters);
-            
+
             if (!result.IsValid)
             {
                 var errorMessage = result.Exception?.Message ?? "Token validation failed";
@@ -123,8 +123,8 @@ public class JwtTokenService
             }
 
             var principal = new ClaimsPrincipal(result.ClaimsIdentity);
-            
-            _logger.LogDebug("JWT token validation successful for user {UserId}", 
+
+            _logger.LogDebug("JWT token validation successful for user {UserId}",
                 principal.FindFirst(ClaimTypes.NameIdentifier)?.Value);
 
             return TokenValidationResult.Success(principal);

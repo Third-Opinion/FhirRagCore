@@ -35,14 +35,14 @@ public class TelemetryTableSetup
             {
                 TableName = tableName,
                 BillingMode = BillingMode.PAY_PER_REQUEST,
-                
+
                 // Primary key: PartitionKey (String), SortKey (String)
                 KeySchema = new List<KeySchemaElement>
                 {
                     new KeySchemaElement("PartitionKey", KeyType.HASH),
                     new KeySchemaElement("SortKey", KeyType.RANGE)
                 },
-                
+
                 AttributeDefinitions = new List<AttributeDefinition>
                 {
                     new AttributeDefinition("PartitionKey", ScalarAttributeType.S),
@@ -52,7 +52,7 @@ public class TelemetryTableSetup
                     new AttributeDefinition("UserId", ScalarAttributeType.S),
                     new AttributeDefinition("Timestamp", ScalarAttributeType.S)
                 },
-                
+
                 // Global Secondary Indexes for querying patterns
                 GlobalSecondaryIndexes = new List<GlobalSecondaryIndex>
                 {
@@ -92,8 +92,8 @@ public class TelemetryTableSetup
                         Projection = new Projection { ProjectionType = ProjectionType.ALL }
                     }
                 },
-                
-                
+
+
                 Tags = new List<Tag>
                 {
                     new Tag { Key = "Application", Value = "FhirRag" },
@@ -103,13 +103,13 @@ public class TelemetryTableSetup
             };
 
             var response = await _dynamoDbClient.CreateTableAsync(createTableRequest, cancellationToken);
-            
+
             _logger.LogInformation("DynamoDB table creation initiated: {TableName}. Status: {Status}",
                 tableName, response.TableDescription.TableStatus);
 
             // Wait for table to become active
             await WaitForTableActiveAsync(tableName, cancellationToken);
-            
+
             // Enable TTL after table creation
             try
             {
@@ -122,14 +122,14 @@ public class TelemetryTableSetup
                         Enabled = true
                     }
                 }, cancellationToken);
-                
+
                 _logger.LogDebug("Enabled TTL for table {TableName}", tableName);
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Failed to enable TTL for table {TableName}", tableName);
             }
-            
+
             _logger.LogInformation("DynamoDB telemetry table created successfully: {TableName}", tableName);
         }
         catch (ResourceInUseException)
@@ -172,9 +172,9 @@ public class TelemetryTableSetup
         try
         {
             _logger.LogWarning("Deleting DynamoDB telemetry table: {TableName}", tableName);
-            
+
             await _dynamoDbClient.DeleteTableAsync(tableName, cancellationToken);
-            
+
             _logger.LogWarning("DynamoDB telemetry table deleted: {TableName}", tableName);
         }
         catch (ResourceNotFoundException)
@@ -262,7 +262,7 @@ public class TelemetryTableSetup
             try
             {
                 var response = await _dynamoDbClient.DescribeTableAsync(tableName, cancellationToken);
-                
+
                 if (response.Table.TableStatus == TableStatus.ACTIVE)
                 {
                     _logger.LogDebug("Table {TableName} is now active", tableName);
@@ -271,7 +271,7 @@ public class TelemetryTableSetup
 
                 _logger.LogDebug("Waiting for table {TableName} to become active. Current status: {Status}",
                     tableName, response.Table.TableStatus);
-                
+
                 await Task.Delay(pollInterval, cancellationToken);
             }
             catch (Exception ex) when (!(ex is OperationCanceledException))
@@ -306,13 +306,13 @@ public class TableStatistics
     {
         if (TableSizeBytes < 1024)
             return $"{TableSizeBytes} bytes";
-        
+
         if (TableSizeBytes < 1024 * 1024)
             return $"{TableSizeBytes / 1024.0:F1} KB";
-        
+
         if (TableSizeBytes < 1024 * 1024 * 1024)
             return $"{TableSizeBytes / (1024.0 * 1024.0):F1} MB";
-        
+
         return $"{TableSizeBytes / (1024.0 * 1024.0 * 1024.0):F1} GB";
     }
 
