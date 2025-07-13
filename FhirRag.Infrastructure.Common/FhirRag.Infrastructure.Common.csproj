@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>FhirRag.Infrastructure.Common</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>ThirdOpinion</Authors>
+    <Description>Common infrastructure services for FHIR RAG system including AWS service implementations</Description>
+    <PackageTags>FHIR;Healthcare;RAG;Infrastructure;AWS;Common;Services</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.0" />
+    <PackageReference Include="AWSSDK.Core" Version="4.0.0" />
+    <PackageReference Include="AWSSDK.S3" Version="4.0.0" />
+    <PackageReference Include="AWSSDK.DynamoDBv2" Version="4.0.0" />
+    <PackageReference Include="AWSSDK.OpenSearchService" Version="4.0.0" />
+    <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="3.7.301" />
+    <PackageReference Include="System.Text.Json" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FhirRag.Core/FhirRag.Core.csproj" />
+    <ProjectReference Include="../FhirRag.Core.Abstractions/FhirRag.Core.Abstractions.csproj" />
+    <ProjectReference Include="../FhirRag.Core.Security/FhirRag.Core.Security.csproj" />
+  </ItemGroup>
+
+</Project>

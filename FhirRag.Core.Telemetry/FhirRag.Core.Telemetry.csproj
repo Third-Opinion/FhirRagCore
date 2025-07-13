@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>FhirRag.Core.Telemetry</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>ThirdOpinion</Authors>
+    <Description>Telemetry and monitoring infrastructure for FHIR RAG system</Description>
+    <PackageTags>FHIR;Healthcare;RAG;Telemetry;Monitoring;DynamoDB</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
+    <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.7.401" />
+    <PackageReference Include="AWSSDK.S3" Version="3.7.401" />
+    <PackageReference Include="System.Text.Json" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FhirRag.Core/FhirRag.Core.csproj" />
+    <ProjectReference Include="../FhirRag.Core.Abstractions/FhirRag.Core.Abstractions.csproj" />
+    <ProjectReference Include="../FhirRag.Core.Security/FhirRag.Core.Security.csproj" />
+  </ItemGroup>
+
+</Project>
