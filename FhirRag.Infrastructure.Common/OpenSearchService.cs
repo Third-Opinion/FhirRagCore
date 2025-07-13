@@ -39,7 +39,7 @@ public class OpenSearchService
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             var response = await _httpClient.PutAsync($"{_configuration.Endpoint}/{index}/_doc/{documentId}", content, cancellationToken);
-            
+
             if (response.IsSuccessStatusCode)
             {
                 _logger.LogDebug("Successfully indexed document {DocumentId} in index {Index}", documentId, index);
@@ -47,7 +47,7 @@ public class OpenSearchService
             }
 
             var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            _logger.LogError("Failed to index document {DocumentId} in index {Index}. Status: {StatusCode}, Error: {Error}", 
+            _logger.LogError("Failed to index document {DocumentId} in index {Index}. Status: {StatusCode}, Error: {Error}",
                 documentId, index, response.StatusCode, errorContent);
             return false;
         }
@@ -69,12 +69,12 @@ public class OpenSearchService
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             var response = await _httpClient.PostAsync($"{_configuration.Endpoint}/{index}/_search", content, cancellationToken);
-            
+
             if (response.IsSuccessStatusCode)
             {
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
                 var searchResponse = JsonSerializer.Deserialize<OpenSearchResponse<T>>(responseContent);
-                
+
                 if (searchResponse != null)
                 {
                     var result = new OpenSearchResult<T>
@@ -91,9 +91,9 @@ public class OpenSearchService
             }
 
             var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            _logger.LogError("Search failed in index {Index}. Status: {StatusCode}, Error: {Error}", 
+            _logger.LogError("Search failed in index {Index}. Status: {StatusCode}, Error: {Error}",
                 index, response.StatusCode, errorContent);
-            
+
             return new OpenSearchResult<T>();
         }
         catch (Exception ex)
@@ -130,12 +130,12 @@ public class OpenSearchService
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             var response = await _httpClient.PostAsync($"{_configuration.Endpoint}/{index}/_search", content, cancellationToken);
-            
+
             if (response.IsSuccessStatusCode)
             {
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
                 var searchResponse = JsonSerializer.Deserialize<OpenSearchResponse<T>>(responseContent);
-                
+
                 if (searchResponse != null)
                 {
                     var result = new OpenSearchResult<T>
@@ -152,9 +152,9 @@ public class OpenSearchService
             }
 
             var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            _logger.LogError("Vector search failed in index {Index}. Status: {StatusCode}, Error: {Error}", 
+            _logger.LogError("Vector search failed in index {Index}. Status: {StatusCode}, Error: {Error}",
                 index, response.StatusCode, errorContent);
-            
+
             return new OpenSearchResult<T>();
         }
         catch (Exception ex)
@@ -172,7 +172,7 @@ public class OpenSearchService
         try
         {
             var bulkBody = new StringBuilder();
-            
+
             foreach (var (id, document) in documents)
             {
                 var indexAction = new { index = new { _index = index, _id = id } };
@@ -182,7 +182,7 @@ public class OpenSearchService
 
             var content = new StringContent(bulkBody.ToString(), Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync($"{_configuration.Endpoint}/_bulk", content, cancellationToken);
-            
+
             if (response.IsSuccessStatusCode)
             {
                 _logger.LogDebug("Successfully bulk indexed {Count} documents in index {Index}", documents.Count(), index);
@@ -190,7 +190,7 @@ public class OpenSearchService
             }
 
             var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            _logger.LogError("Bulk index failed in index {Index}. Status: {StatusCode}, Error: {Error}", 
+            _logger.LogError("Bulk index failed in index {Index}. Status: {StatusCode}, Error: {Error}",
                 index, response.StatusCode, errorContent);
             return false;
         }
@@ -212,7 +212,7 @@ public class OpenSearchService
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             var response = await _httpClient.PutAsync($"{_configuration.Endpoint}/{index}", content, cancellationToken);
-            
+
             if (response.IsSuccessStatusCode)
             {
                 _logger.LogDebug("Successfully created index {Index}", index);
@@ -220,7 +220,7 @@ public class OpenSearchService
             }
 
             var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            _logger.LogError("Failed to create index {Index}. Status: {StatusCode}, Error: {Error}", 
+            _logger.LogError("Failed to create index {Index}. Status: {StatusCode}, Error: {Error}",
                 index, response.StatusCode, errorContent);
             return false;
         }

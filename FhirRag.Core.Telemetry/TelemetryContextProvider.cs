@@ -70,7 +70,7 @@ public class TelemetryContextProvider
     public async Task CompleteContextAsync(string sessionId, bool success = true, string? errorMessage = null, CancellationToken cancellationToken = default)
     {
         TelemetryContext? context;
-        
+
         lock (_lock)
         {
             if (!_activeContexts.TryGetValue(sessionId, out context))
@@ -78,7 +78,7 @@ public class TelemetryContextProvider
                 _logger.LogWarning("Attempted to complete non-existent telemetry context {SessionId}", sessionId);
                 return;
             }
-            
+
             _activeContexts.Remove(sessionId);
         }
 
@@ -130,9 +130,9 @@ public class TelemetryContextProvider
             throw new InvalidOperationException($"Telemetry context {sessionId} not found");
 
         var step = context.StartStep(stepName, description);
-        
+
         _logger.LogDebug("Started telemetry step {StepName} in session {SessionId}", stepName, sessionId);
-        
+
         return step;
     }
 
@@ -156,7 +156,7 @@ public class TelemetryContextProvider
         }
 
         step.Complete(success, errorMessage);
-        
+
         if (data != null)
         {
             foreach (var kvp in data)
@@ -239,9 +239,9 @@ public class TelemetryAnalyticsService
     /// Generates telemetry statistics for a given period
     /// </summary>
     public async Task<TelemetryStatistics> GenerateStatisticsAsync(
-        string tenantId, 
-        DateTime fromDate, 
-        DateTime toDate, 
+        string tenantId,
+        DateTime fromDate,
+        DateTime toDate,
         CancellationToken cancellationToken = default)
     {
         try
@@ -353,7 +353,7 @@ public static class TelemetryExtensions
         string? description = null)
     {
         var step = await provider.StartStepAsync(sessionId, stepName, description);
-        
+
         try
         {
             var result = await operation();

@@ -1,0 +1,235 @@
+name: Publish NuGet Packages
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - '**/*.csproj'
+      - '**/src/**'
+      - '!**/test/**'
+  workflow_dispatch:
+    inputs:
+      version_override:
+        description: 'Override version (optional)'
+        required: false
+        type: string
+      force_publish:
+        description: 'Force publish even if version exists'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  SOLUTION_PATH: 'FhirRagCore.sln'
+
+jobs:
+  determine-version:
+    name: Determine Package Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      version_suffix: ${{ steps.version.outputs.version_suffix }}
+      should_publish: ${{ steps.version.outputs.should_publish }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Determine version
+      id: version
+      run: |
+        if [ "${{ github.event.inputs.version_override }}" != "" ]; then
+          VERSION="${{ github.event.inputs.version_override }}"
+        else
+          # Get version from project file
+          VERSION=$(grep -oP '<Version>\K[^<]+' FhirRag.Core/FhirRag.Core.csproj | head -1)
+          if [ -z "$VERSION" ]; then
+            VERSION="1.0.0"
+          fi
+        fi
+        
+        # Add suffix for development builds
+        if [ "${{ github.ref }}" = "refs/heads/develop" ]; then
+          BUILD_NUMBER=${{ github.run_number }}
+          VERSION_SUFFIX="dev.${BUILD_NUMBER}"
+          FULL_VERSION="${VERSION}-${VERSION_SUFFIX}"
+        else
+          VERSION_SUFFIX=""
+          FULL_VERSION="${VERSION}"
+        fi
+        
+        echo "version=${FULL_VERSION}" >> $GITHUB_OUTPUT
+        echo "version_suffix=${VERSION_SUFFIX}" >> $GITHUB_OUTPUT
+        echo "should_publish=true" >> $GITHUB_OUTPUT
+        
+        echo "📦 Package version: ${FULL_VERSION}"
+        echo "🏷️ Version suffix: ${VERSION_SUFFIX}"
+
+  build-and-pack:
+    name: Build and Pack NuGet Packages
+    runs-on: ubuntu-latest
+    needs: determine-version
+    if: needs.determine-version.outputs.should_publish == 'true'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.SOLUTION_PATH }}
+
+    - name: Build solution
+      run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release --no-restore
+
+    - name: Run tests
+      run: dotnet test ${{ env.SOLUTION_PATH }} --configuration Release --no-build --verbosity normal
+
+    - name: Pack NuGet packages
+      run: |
+        if [ "${{ needs.determine-version.outputs.version_suffix }}" != "" ]; then
+          dotnet pack ${{ env.SOLUTION_PATH }} \
+            --configuration Release \
+            --no-build \
+            --output ./nupkgs \
+            -p:PackageVersion=${{ needs.determine-version.outputs.version }} \
+            -p:VersionSuffix=${{ needs.determine-version.outputs.version_suffix }}
+        else
+          dotnet pack ${{ env.SOLUTION_PATH }} \
+            --configuration Release \
+            --no-build \
+            --output ./nupkgs \
+            -p:PackageVersion=${{ needs.determine-version.outputs.version }}
+        fi
+
+    - name: List generated packages
+      run: |
+        echo "📦 Generated NuGet packages:"
+        ls -la ./nupkgs/*.nupkg
+
+    - name: Upload packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: nuget-packages-${{ needs.determine-version.outputs.version }}
+        path: ./nupkgs/*.nupkg
+
+  publish-to-nuget:
+    name: Publish to NuGet.org
+    runs-on: ubuntu-latest
+    needs: [determine-version, build-and-pack]
+    if: needs.determine-version.outputs.should_publish == 'true'
+    environment: 
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+    
+    steps:
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Download packages
+      uses: actions/download-artifact@v4
+      with:
+        name: nuget-packages-${{ needs.determine-version.outputs.version }}
+        path: ./nupkgs
+
+    - name: Publish to NuGet.org
+      run: |
+        for package in ./nupkgs/*.nupkg; do
+          echo "📤 Publishing $(basename $package)"
+          
+          if [ "${{ github.event.inputs.force_publish }}" = "true" ]; then
+            SKIP_DUPLICATE=""
+          else
+            SKIP_DUPLICATE="--skip-duplicate"
+          fi
+          
+          dotnet nuget push "$package" \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            $SKIP_DUPLICATE \
+            --timeout 300
+        done
+
+    - name: Create GitHub Release
+      if: github.ref == 'refs/heads/main'
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ needs.determine-version.outputs.version }}
+        release_name: Release v${{ needs.determine-version.outputs.version }}
+        body: |
+          ## FhirRagCore v${{ needs.determine-version.outputs.version }}
+          
+          ### NuGet Packages Published:
+          - FhirRag.Core
+          - FhirRag.Core.Abstractions  
+          - FhirRag.Core.Security
+          - FhirRag.Core.Telemetry
+          - FhirRag.Infrastructure.Common
+          
+          ### Changes
+          See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
+          
+          🤖 Generated with GitHub Actions
+        draft: false
+        prerelease: false
+
+  publish-to-github:
+    name: Publish to GitHub Packages
+    runs-on: ubuntu-latest
+    needs: [determine-version, build-and-pack]
+    if: needs.determine-version.outputs.should_publish == 'true'
+    
+    steps:
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Download packages
+      uses: actions/download-artifact@v4
+      with:
+        name: nuget-packages-${{ needs.determine-version.outputs.version }}
+        path: ./nupkgs
+
+    - name: Publish to GitHub Packages
+      run: |
+        for package in ./nupkgs/*.nupkg; do
+          echo "📤 Publishing $(basename $package) to GitHub Packages"
+          
+          dotnet nuget push "$package" \
+            --api-key ${{ secrets.GITHUB_TOKEN }} \
+            --source https://nuget.pkg.github.com/Third-Opinion/index.json \
+            --skip-duplicate \
+            --timeout 300
+        done
+
+  notification:
+    name: Notify Publication Status
+    runs-on: ubuntu-latest
+    needs: [determine-version, build-and-pack, publish-to-nuget, publish-to-github]
+    if: always() && needs.determine-version.outputs.should_publish == 'true'
+    
+    steps:
+    - name: Report Success
+      if: needs.publish-to-nuget.result == 'success'
+      run: |
+        echo "✅ Successfully published FhirRagCore v${{ needs.determine-version.outputs.version }}"
+        echo "📦 Available on:"
+        echo "   - NuGet.org: https://www.nuget.org/packages/FhirRag.Core/"
+        echo "   - GitHub Packages: https://github.com/Third-Opinion/FhirRagCore/packages"
+
+    - name: Report Failure
+      if: needs.publish-to-nuget.result == 'failure'
+      run: |
+        echo "❌ Failed to publish FhirRagCore v${{ needs.determine-version.outputs.version }}"
+        exit 1

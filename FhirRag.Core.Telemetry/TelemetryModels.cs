@@ -61,7 +61,7 @@ public class TelemetryEntry
         };
 
         // Handle TTL timestamp
-        if (document.TryGetValue("ExpiresAt", out var expiresAtValue) && 
+        if (document.TryGetValue("ExpiresAt", out var expiresAtValue) &&
             long.TryParse(expiresAtValue.ToString(), out var expiresAtUnix))
         {
             entry.ExpiresAt = DateTimeOffset.FromUnixTimeSeconds(expiresAtUnix).DateTime;
@@ -153,8 +153,8 @@ public class TelemetryContext
             SuccessfulSteps = Steps.Count(s => s.Status == TelemetryStepStatus.Completed),
             FailedSteps = Steps.Count(s => s.Status == TelemetryStepStatus.Failed),
             TotalDuration = GetTotalDuration(),
-            AverageStepDuration = Steps.Any() ? 
-                TimeSpan.FromMilliseconds(Steps.Average(s => s.Duration.TotalMilliseconds)) : 
+            AverageStepDuration = Steps.Any() ?
+                TimeSpan.FromMilliseconds(Steps.Average(s => s.Duration.TotalMilliseconds)) :
                 TimeSpan.Zero,
             ResourceType = ResourceType,
             ResourceId = ResourceId
@@ -250,14 +250,14 @@ public class TelemetryMetrics
             > 0.0 => 1,    // Some success - 1 star
             _ => 1         // Complete failure - 1 star
         };
-        
+
         // Reduce rating for slow performance (only for high success rates)
         if (rating >= 4)
         {
             if (AverageStepDuration > TimeSpan.FromSeconds(30)) rating--;
             if (AverageStepDuration > TimeSpan.FromMinutes(2)) rating--;
         }
-        
+
         return Math.Max(1, rating);
     }
 }

@@ -37,14 +37,14 @@ public class DynamoDbService
         {
             var json = JsonSerializer.Serialize(document);
             var doc = Document.FromJson(json);
-            
+
             doc[_configuration.PartitionKeyName] = partitionKey;
             doc[_configuration.SortKeyName] = sortKey;
             doc["CreatedAt"] = DateTime.UtcNow;
             doc["UpdatedAt"] = DateTime.UtcNow;
 
             await _table.PutItemAsync(doc, cancellationToken);
-            
+
             _logger.LogDebug("Successfully stored document with PK={PartitionKey}, SK={SortKey}", partitionKey, sortKey);
             return true;
         }
@@ -63,7 +63,7 @@ public class DynamoDbService
         try
         {
             var doc = await _table.GetItemAsync(partitionKey, sortKey, cancellationToken);
-            
+
             if (doc == null)
             {
                 _logger.LogDebug("Document not found with PK={PartitionKey}, SK={SortKey}", partitionKey, sortKey);
@@ -78,7 +78,7 @@ public class DynamoDbService
 
             var json = doc.ToJson();
             var result = JsonSerializer.Deserialize<T>(json);
-            
+
             _logger.LogDebug("Successfully retrieved document with PK={PartitionKey}, SK={SortKey}", partitionKey, sortKey);
             return result;
         }
@@ -97,7 +97,7 @@ public class DynamoDbService
         try
         {
             await _table.DeleteItemAsync(partitionKey, sortKey, cancellationToken);
-            
+
             _logger.LogDebug("Successfully deleted document with PK={PartitionKey}, SK={SortKey}", partitionKey, sortKey);
             return true;
         }
@@ -116,7 +116,7 @@ public class DynamoDbService
         try
         {
             var queryFilter = new QueryFilter(_configuration.PartitionKeyName, QueryOperator.Equal, partitionKey);
-            
+
             if (!string.IsNullOrEmpty(sortKeyPrefix))
             {
                 queryFilter.AddCondition(_configuration.SortKeyName, QueryOperator.BeginsWith, sortKeyPrefix);
@@ -128,7 +128,7 @@ public class DynamoDbService
             do
             {
                 var documentSet = await search.GetNextSetAsync(cancellationToken);
-                
+
                 foreach (var doc in documentSet)
                 {
                     // Remove DynamoDB metadata fields before deserialization
@@ -165,12 +165,12 @@ public class DynamoDbService
         try
         {
             var batchWrite = _table.CreateBatchWrite();
-            
+
             foreach (var (partitionKey, sortKey, document) in documents)
             {
                 var json = JsonSerializer.Serialize(document);
                 var doc = Document.FromJson(json);
-                
+
                 doc[_configuration.PartitionKeyName] = partitionKey;
                 doc[_configuration.SortKeyName] = sortKey;
                 doc["CreatedAt"] = DateTime.UtcNow;
@@ -180,7 +180,7 @@ public class DynamoDbService
             }
 
             await batchWrite.ExecuteAsync(cancellationToken);
-            
+
             _logger.LogDebug("Successfully batch wrote {Count} documents", documents.Count());
             return true;
         }
@@ -200,7 +200,7 @@ public class DynamoDbService
         {
             var json = JsonSerializer.Serialize(document);
             var doc = Document.FromJson(json);
-            
+
             doc[_configuration.PartitionKeyName] = partitionKey;
             doc[_configuration.SortKeyName] = sortKey;
             doc["UpdatedAt"] = DateTime.UtcNow;
@@ -215,7 +215,7 @@ public class DynamoDbService
             }
 
             await _table.PutItemAsync(doc, config, cancellationToken);
-            
+
             _logger.LogDebug("Successfully updated document with PK={PartitionKey}, SK={SortKey}", partitionKey, sortKey);
             return true;
         }

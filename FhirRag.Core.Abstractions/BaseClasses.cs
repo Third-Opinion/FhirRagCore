@@ -39,13 +39,13 @@ public abstract class BaseFhirProcessor<TResource> : IFhirProcessor<TResource> w
             // Validate resource
             result.AddEnrichmentStep("validation", "Validating FHIR resource");
             var isValid = await ValidateAsync(resource, cancellationToken);
-            
+
             if (!isValid)
             {
                 result.FailStep("validation", "Resource validation failed");
                 return result;
             }
-            
+
             result.CompleteStep("validation", new Dictionary<string, object> { { "valid", true } });
 
             // Process resource
@@ -104,7 +104,7 @@ public abstract class BaseStorageService : IStorageService
     {
         if (string.IsNullOrWhiteSpace(key))
             throw new ArgumentException("Key cannot be null or empty", nameof(key));
-        
+
         if (key.Length > 1024)
             throw new ArgumentException("Key cannot exceed 1024 characters", nameof(key));
     }
@@ -113,7 +113,7 @@ public abstract class BaseStorageService : IStorageService
     {
         if (data == null)
             throw new ArgumentNullException(nameof(data));
-        
+
         if (data.Length == 0)
             throw new ArgumentException("Data cannot be empty", nameof(data));
     }
@@ -170,7 +170,7 @@ public abstract class BaseEmbeddingService : IEmbeddingService
     {
         if (embedding1 == null || embedding2 == null)
             throw new ArgumentNullException("Embeddings cannot be null");
-        
+
         if (embedding1.Length != embedding2.Length)
             throw new ArgumentException("Embeddings must have the same length");
 
@@ -196,7 +196,7 @@ public abstract class BaseEmbeddingService : IEmbeddingService
     {
         if (string.IsNullOrWhiteSpace(text))
             throw new ArgumentException("Text cannot be null or empty", nameof(text));
-        
+
         if (text.Length > 100_000)
             throw new ArgumentException("Text cannot exceed 100,000 characters", nameof(text));
     }
@@ -205,7 +205,7 @@ public abstract class BaseEmbeddingService : IEmbeddingService
     {
         if (structuredData == null)
             throw new ArgumentNullException(nameof(structuredData));
-        
+
         if (structuredData.Count == 0)
             throw new ArgumentException("Structured data cannot be empty", nameof(structuredData));
     }
@@ -227,7 +227,7 @@ public abstract class BaseClinicalService
     {
         if (string.IsNullOrWhiteSpace(clinicalText))
             throw new ArgumentException("Clinical text cannot be null or empty", nameof(clinicalText));
-        
+
         if (clinicalText.Length > 50_000)
             throw new ArgumentException("Clinical text cannot exceed 50,000 characters", nameof(clinicalText));
     }
