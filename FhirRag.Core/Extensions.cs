@@ -28,14 +28,14 @@ public static class FhirModelExtensions
             BirthDate = patient.BirthDate?.ToString("yyyy-MM-dd"),
             Gender = ParseGender(patient.Gender)
         };
-        
+
         // Add identifier
         fhirPatient.Identifier.Add(new Hl7.Fhir.Model.Identifier
         {
             Value = patient.Identifier,
             Use = Hl7.Fhir.Model.Identifier.IdentifierUse.Usual
         });
-        
+
         // Add name
         fhirPatient.Name.Add(new Hl7.Fhir.Model.HumanName
         {
@@ -43,7 +43,7 @@ public static class FhirModelExtensions
             Given = new[] { patient.GivenName },
             Family = patient.FamilyName
         });
-        
+
         // Add contact information
         if (!string.IsNullOrEmpty(patient.Phone))
         {
@@ -54,7 +54,7 @@ public static class FhirModelExtensions
                 Use = Hl7.Fhir.Model.ContactPoint.ContactPointUse.Home
             });
         }
-        
+
         if (!string.IsNullOrEmpty(patient.Email))
         {
             fhirPatient.Telecom.Add(new Hl7.Fhir.Model.ContactPoint
@@ -64,10 +64,10 @@ public static class FhirModelExtensions
                 Use = Hl7.Fhir.Model.ContactPoint.ContactPointUse.Home
             });
         }
-        
+
         return fhirPatient;
     }
-    
+
     /// <summary>
     /// Converts FhirObservation to FHIR R4 Observation resource
     /// </summary>
@@ -80,13 +80,13 @@ public static class FhirModelExtensions
             Subject = new ResourceReference($"Patient/{observation.PatientId}"),
             Code = observation.Code.ToFhirCodeableConcept()
         };
-        
+
         // Add effective date
         if (observation.EffectiveDateTime.HasValue)
         {
             fhirObservation.Effective = new FhirDateTime(observation.EffectiveDateTime.Value);
         }
-        
+
         // Add value
         if (!string.IsNullOrEmpty(observation.ValueString))
         {
@@ -98,18 +98,18 @@ public static class FhirModelExtensions
             {
                 Value = observation.ValueDecimal.Value
             };
-            
+
             if (!string.IsNullOrEmpty(observation.ValueUnit))
             {
                 quantity.Unit = observation.ValueUnit;
             }
-            
+
             fhirObservation.Value = quantity;
         }
-        
+
         return fhirObservation;
     }
-    
+
     /// <summary>
     /// Creates a clinical relationship mapping between resources
     /// </summary>
@@ -134,10 +134,10 @@ public static class FhirModelExtensions
                     patient.ProcedureIds.Add(resourceId);
                 break;
         }
-        
+
         patient.UpdatedAt = DateTime.UtcNow;
     }
-    
+
     /// <summary>
     /// Gets all related resource IDs for a patient
     /// </summary>
@@ -150,14 +150,14 @@ public static class FhirModelExtensions
         allIds.AddRange(patient.ProcedureIds);
         return allIds.Distinct().ToList();
     }
-    
+
     /// <summary>
     /// Converts our CodeableConcept to FHIR CodeableConcept
     /// </summary>
     public static Hl7.Fhir.Model.CodeableConcept ToFhirCodeableConcept(this LocalCodeableConcept concept)
     {
         var fhirConcept = new Hl7.Fhir.Model.CodeableConcept();
-        
+
         foreach (var coding in concept.Coding)
         {
             fhirConcept.Coding.Add(new Hl7.Fhir.Model.Coding
@@ -168,15 +168,15 @@ public static class FhirModelExtensions
                 Version = coding.Version
             });
         }
-        
+
         if (!string.IsNullOrEmpty(concept.Text))
         {
             fhirConcept.Text = concept.Text;
         }
-        
+
         return fhirConcept;
     }
-    
+
     /// <summary>
     /// Creates a deep clone of a FHIR model
     /// </summary>
@@ -185,27 +185,27 @@ public static class FhirModelExtensions
         var json = JsonSerializer.Serialize(model);
         return JsonSerializer.Deserialize<T>(json) ?? throw new InvalidOperationException("Failed to clone object");
     }
-    
+
     /// <summary>
     /// Checks if a resource has been enriched
     /// </summary>
     public static bool IsEnriched(this EnrichedFhirResource resource)
     {
-        return resource.NlpResult != null || 
-               resource.TerminologyMappings.Any() || 
+        return resource.NlpResult != null ||
+               resource.TerminologyMappings.Any() ||
                resource.RiskScores.Any() ||
                resource.Embeddings?.Any() == true;
     }
-    
+
     /// <summary>
     /// Gets the primary coding from a CodeableConcept
     /// </summary>
     public static LocalCoding? GetPrimaryCoding(this LocalCodeableConcept concept)
     {
-        return concept.Coding.FirstOrDefault(c => c.UserSelected == true) ?? 
+        return concept.Coding.FirstOrDefault(c => c.UserSelected == true) ??
                concept.Coding.FirstOrDefault();
     }
-    
+
     /// <summary>
     /// Adds enrichment metadata to a processing result
     /// </summary>
@@ -218,10 +218,10 @@ public static class FhirModelExtensions
             Status = ProcessingStepStatus.InProgress,
             Data = data ?? new Dictionary<string, object>()
         };
-        
+
         result.Steps.Add(step);
     }
-    
+
     /// <summary>
     /// Completes a processing step
     /// </summary>
@@ -232,7 +232,7 @@ public static class FhirModelExtensions
         {
             step.Status = ProcessingStepStatus.Completed;
             step.CompletedAt = DateTime.UtcNow;
-            
+
             if (data != null)
             {
                 foreach (var kvp in data)
@@ -242,7 +242,7 @@ public static class FhirModelExtensions
             }
         }
     }
-    
+
     /// <summary>
     /// Marks a processing step as failed
     /// </summary>
@@ -255,11 +255,11 @@ public static class FhirModelExtensions
             step.ErrorMessage = errorMessage;
             step.CompletedAt = DateTime.UtcNow;
         }
-        
+
         result.Status = ProcessingStatus.Failed;
         result.ErrorMessage = errorMessage;
     }
-    
+
     /// <summary>
     /// Parses gender string to FHIR AdministrativeGender
     /// </summary>
@@ -295,7 +295,7 @@ public static class ClinicalRelationshipExtensions
         }
         condition.UpdatedAt = DateTime.UtcNow;
     }
-    
+
     /// <summary>
     /// Links a condition to related medications
     /// </summary>
@@ -310,7 +310,7 @@ public static class ClinicalRelationshipExtensions
         }
         condition.UpdatedAt = DateTime.UtcNow;
     }
-    
+
     /// <summary>
     /// Links a medication to related conditions
     /// </summary>
@@ -325,7 +325,7 @@ public static class ClinicalRelationshipExtensions
         }
         medication.UpdatedAt = DateTime.UtcNow;
     }
-    
+
     /// <summary>
     /// Links a procedure to related conditions
     /// </summary>

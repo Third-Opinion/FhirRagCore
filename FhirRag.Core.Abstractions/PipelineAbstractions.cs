@@ -12,12 +12,12 @@ public interface IPipelineStep<TInput, TOutput>
     /// Gets the step name
     /// </summary>
     string StepName { get; }
-    
+
     /// <summary>
     /// Executes the pipeline step
     /// </summary>
     Task<TOutput> ExecuteAsync(TInput input, PipelineContext context, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Validates the input before execution
     /// </summary>
@@ -33,12 +33,12 @@ public interface IPipelineOrchestrator<TInput, TOutput>
     /// Executes the entire pipeline
     /// </summary>
     Task<TOutput> ExecutePipelineAsync(TInput input, PipelineContext context, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Adds a step to the pipeline
     /// </summary>
     void AddStep(IPipelineStep<object, object> step);
-    
+
     /// <summary>
     /// Gets the pipeline configuration
     /// </summary>
@@ -56,12 +56,12 @@ public class PipelineContext
     public Dictionary<string, object> Properties { get; set; } = new();
     public DateTime StartedAt { get; set; } = DateTime.UtcNow;
     public List<ProcessingStep> Steps { get; set; } = new();
-    
+
     public T? GetProperty<T>(string key)
     {
         return Properties.TryGetValue(key, out var value) && value is T typedValue ? typedValue : default;
     }
-    
+
     public void SetProperty<T>(string key, T value)
     {
         if (value != null)
@@ -135,7 +135,7 @@ public abstract class BasePipelineStep<TInput, TOutput> : IPipelineStep<TInput, 
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error executing pipeline step: {StepName}", StepName);
-            
+
             step.Status = ProcessingStepStatus.Failed;
             step.ErrorMessage = ex.Message;
             step.CompletedAt = DateTime.UtcNow;
@@ -164,7 +164,7 @@ public abstract class BasePipelineOrchestrator<TInput, TOutput> : IPipelineOrche
     protected readonly List<IPipelineStep<object, object>> Steps = new();
 
     protected BasePipelineOrchestrator(
-        ILogger logger, 
+        ILogger logger,
         ITelemetryService telemetryService,
         PipelineConfiguration configuration)
     {
@@ -179,7 +179,7 @@ public abstract class BasePipelineOrchestrator<TInput, TOutput> : IPipelineOrche
     {
         if (step == null)
             throw new ArgumentNullException(nameof(step));
-        
+
         Steps.Add(step);
         Logger.LogDebug("Added step {StepName} to pipeline {PipelineName}", step.StepName, Configuration.Name);
     }
@@ -229,7 +229,7 @@ public interface IRetryPolicy
     /// Executes an operation with retry logic
     /// </summary>
     Task<T> ExecuteAsync<T>(Func<Task<T>> operation, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Determines if an exception should trigger a retry
     /// </summary>
@@ -263,10 +263,10 @@ public class ExponentialBackoffRetryPolicy : IRetryPolicy
             catch (Exception ex) when (attempt <= _maxRetries && ShouldRetry(ex, attempt))
             {
                 var delay = TimeSpan.FromMilliseconds(_baseDelay.TotalMilliseconds * Math.Pow(2, attempt - 1));
-                
-                _logger.LogWarning("Operation failed (attempt {Attempt}/{MaxAttempts}), retrying in {Delay}ms: {Error}", 
+
+                _logger.LogWarning("Operation failed (attempt {Attempt}/{MaxAttempts}), retrying in {Delay}ms: {Error}",
                     attempt, _maxRetries + 1, delay.TotalMilliseconds, ex.Message);
-                
+
                 await Task.Delay(delay, cancellationToken);
             }
         }

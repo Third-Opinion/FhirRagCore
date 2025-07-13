@@ -10,23 +10,23 @@ public class ProcessingResult
 {
     [Required]
     public string ResourceId { get; set; } = string.Empty;
-    
+
     [Required]
     public string ResourceType { get; set; } = string.Empty;
-    
+
     [Required]
     public ProcessingStatus Status { get; set; } = ProcessingStatus.Pending;
-    
+
     public string? ErrorMessage { get; set; }
-    
+
     public List<ProcessingStep> Steps { get; set; } = new();
-    
+
     public Dictionary<string, object> Metadata { get; set; } = new();
-    
+
     public DateTime StartedAt { get; set; } = DateTime.UtcNow;
-    
+
     public DateTime? CompletedAt { get; set; }
-    
+
     [JsonPropertyName("tenant_id")]
     public string TenantId { get; set; } = string.Empty;
 }
@@ -38,20 +38,20 @@ public class ProcessingStep
 {
     [Required]
     public string Name { get; set; } = string.Empty;
-    
+
     [Required]
     public ProcessingStepStatus Status { get; set; } = ProcessingStepStatus.Pending;
-    
+
     public string? Description { get; set; }
-    
+
     public string? ErrorMessage { get; set; }
-    
+
     public Dictionary<string, object> Data { get; set; } = new();
-    
+
     public DateTime StartedAt { get; set; } = DateTime.UtcNow;
-    
+
     public DateTime? CompletedAt { get; set; }
-    
+
     public TimeSpan Duration => CompletedAt?.Subtract(StartedAt) ?? TimeSpan.Zero;
 }
 
@@ -62,24 +62,24 @@ public class EnrichedFhirResource
 {
     [Required]
     public string OriginalResourceId { get; set; } = string.Empty;
-    
+
     [Required]
     public string ResourceType { get; set; } = string.Empty;
-    
+
     public string? OriginalData { get; set; }
-    
+
     public ClinicalNlpResult? NlpResult { get; set; }
-    
+
     public List<TerminologyMapping> TerminologyMappings { get; set; } = new();
-    
+
     public List<ClinicalRiskScore> RiskScores { get; set; } = new();
-    
+
     public Dictionary<string, object> ExtractedFeatures { get; set; } = new();
-    
+
     public List<float>? Embeddings { get; set; }
-    
+
     public DateTime EnrichedAt { get; set; } = DateTime.UtcNow;
-    
+
     [JsonPropertyName("tenant_id")]
     public string TenantId { get; set; } = string.Empty;
 }
@@ -90,11 +90,11 @@ public class EnrichedFhirResource
 public class ClinicalNlpResult
 {
     public List<MedicalEntity> Entities { get; set; } = new();
-    
+
     public Dictionary<string, float> Confidence { get; set; } = new();
-    
+
     public string? ProcessedText { get; set; }
-    
+
     public DateTime ProcessedAt { get; set; } = DateTime.UtcNow;
 }
 
@@ -105,16 +105,16 @@ public class MedicalEntity
 {
     [Required]
     public string Text { get; set; } = string.Empty;
-    
+
     [Required]
     public string Category { get; set; } = string.Empty;
-    
+
     public string? Type { get; set; }
-    
+
     public float Confidence { get; set; }
-    
+
     public int BeginOffset { get; set; }
-    
+
     public int EndOffset { get; set; }
 }
 
@@ -125,22 +125,22 @@ public class TerminologyMapping
 {
     [Required]
     public string SourceSystem { get; set; } = string.Empty;
-    
+
     [Required]
     public string SourceCode { get; set; } = string.Empty;
-    
+
     [Required]
     public string TargetSystem { get; set; } = string.Empty;
-    
+
     [Required]
     public string TargetCode { get; set; } = string.Empty;
-    
+
     public string? SourceDisplay { get; set; }
-    
+
     public string? TargetDisplay { get; set; }
-    
+
     public float Confidence { get; set; }
-    
+
     public DateTime MappedAt { get; set; } = DateTime.UtcNow;
 }
 
@@ -151,18 +151,18 @@ public class ClinicalRiskScore
 {
     [Required]
     public string RiskType { get; set; } = string.Empty;
-    
+
     [Required]
     public float Score { get; set; }
-    
+
     public string? ScaleType { get; set; }
-    
+
     public string? Interpretation { get; set; }
-    
+
     public List<string> ContributingFactors { get; set; } = new();
-    
+
     public float Confidence { get; set; }
-    
+
     public DateTime CalculatedAt { get; set; } = DateTime.UtcNow;
 }
 

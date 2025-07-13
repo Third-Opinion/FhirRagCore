@@ -23,7 +23,7 @@ public class SecurityContext
     public string UserAgent { get; set; } = string.Empty;
     public bool IsAuthenticated => !string.IsNullOrEmpty(UserId);
     public bool IsSystemUser { get; set; } = false;
-    
+
     /// <summary>
     /// Creates a security context from claims principal
     /// </summary>
@@ -36,24 +36,24 @@ public class SecurityContext
             UserName = principal.FindFirst(ClaimTypes.Name)?.Value ?? string.Empty,
             Email = principal.FindFirst(ClaimTypes.Email)?.Value ?? string.Empty
         };
-        
+
         // Extract roles
         context.Roles = principal.FindAll(ClaimTypes.Role)
             .Select(c => c.Value)
             .ToList();
-        
+
         // Extract custom permissions
         context.Permissions = principal.FindAll("permission")
             .Select(c => c.Value)
             .ToList();
-        
+
         // Store all claims for reference
         context.Claims = principal.Claims
             .ToDictionary(c => c.Type, c => c.Value);
-        
+
         return context;
     }
-    
+
     /// <summary>
     /// Checks if user has a specific role
     /// </summary>
@@ -61,7 +61,7 @@ public class SecurityContext
     {
         return Roles.Contains(role, StringComparer.OrdinalIgnoreCase);
     }
-    
+
     /// <summary>
     /// Checks if user has a specific permission
     /// </summary>
@@ -70,7 +70,7 @@ public class SecurityContext
         return Permissions.Contains(permission, StringComparer.OrdinalIgnoreCase) ||
                IsSystemUser;
     }
-    
+
     /// <summary>
     /// Checks if user has any of the specified roles
     /// </summary>
@@ -78,7 +78,7 @@ public class SecurityContext
     {
         return roles.Any(role => HasRole(role));
     }
-    
+
     /// <summary>
     /// Checks if user has all of the specified permissions
     /// </summary>
@@ -86,7 +86,7 @@ public class SecurityContext
     {
         return permissions.All(permission => HasPermission(permission));
     }
-    
+
     /// <summary>
     /// Checks if the context has expired
     /// </summary>
@@ -94,7 +94,7 @@ public class SecurityContext
     {
         return ExpiresAt.HasValue && ExpiresAt.Value <= DateTime.UtcNow;
     }
-    
+
     /// <summary>
     /// Gets a specific claim value
     /// </summary>
@@ -102,7 +102,7 @@ public class SecurityContext
     {
         return Claims.TryGetValue(claimType, out var value) ? value : null;
     }
-    
+
     /// <summary>
     /// Gets all permissions
     /// </summary>
@@ -110,7 +110,7 @@ public class SecurityContext
     {
         return Permissions;
     }
-    
+
     /// <summary>
     /// Gets all roles
     /// </summary>
@@ -127,13 +127,13 @@ public class TenantValidator
 {
     private readonly ILogger<TenantValidator> _logger;
     private readonly HashSet<string> _validTenants;
-    
+
     public TenantValidator(ILogger<TenantValidator> logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _validTenants = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     }
-    
+
     /// <summary>
     /// Validates if a tenant ID is valid
     /// </summary>
@@ -144,20 +144,20 @@ public class TenantValidator
             _logger.LogWarning("Empty tenant ID provided for validation");
             return false;
         }
-        
+
         // Check format
         if (!IsValidTenantFormat(tenantId))
         {
             _logger.LogWarning("Invalid tenant ID format: {TenantId}", tenantId);
             return false;
         }
-        
+
         // For now, accept any properly formatted tenant ID
         // In production, this would check against a tenant registry
         _logger.LogDebug("Tenant ID validated: {TenantId}", tenantId);
         return true;
     }
-    
+
     /// <summary>
     /// Validates tenant ID format
     /// </summary>
@@ -165,14 +165,14 @@ public class TenantValidator
     {
         if (string.IsNullOrWhiteSpace(tenantId))
             return false;
-        
+
         if (tenantId.Length < 3 || tenantId.Length > 50)
             return false;
-        
+
         // Allow alphanumeric, hyphens, and underscores
         return tenantId.All(c => char.IsLetterOrDigit(c) || c == '-' || c == '_');
     }
-    
+
     /// <summary>
     /// Registers a valid tenant
     /// </summary>
@@ -188,7 +188,7 @@ public class TenantValidator
             throw new ArgumentException($"Invalid tenant ID format: {tenantId}", nameof(tenantId));
         }
     }
-    
+
     /// <summary>
     /// Removes a tenant from valid list
     /// </summary>
@@ -199,7 +199,7 @@ public class TenantValidator
             _logger.LogInformation("Unregistered tenant: {TenantId}", tenantId);
         }
     }
-    
+
     /// <summary>
     /// Gets all registered tenants
     /// </summary>
@@ -225,7 +225,7 @@ public static class Permissions
     public const string WriteMedication = "fhir:medication:write";
     public const string ReadProcedure = "fhir:procedure:read";
     public const string WriteProcedure = "fhir:procedure:write";
-    
+
     // System permissions
     public const string SystemAdmin = "system:admin";
     public const string TenantAdmin = "tenant:admin";
@@ -235,31 +235,31 @@ public static class Permissions
     public const string TelemetryWrite = "telemetry:write";
     public const string FeedbackRead = "feedback:read";
     public const string FeedbackWrite = "feedback:write";
-    
+
     // Query permissions
     public const string QueryExecute = "query:execute";
     public const string QueryHistory = "query:history";
     public const string QueryAdmin = "query:admin";
-    
+
     /// <summary>
     /// Gets all FHIR read permissions
     /// </summary>
     public static readonly string[] AllFhirRead = {
         ReadPatient, ReadObservation, ReadCondition, ReadMedication, ReadProcedure
     };
-    
+
     /// <summary>
     /// Gets all FHIR write permissions
     /// </summary>
     public static readonly string[] AllFhirWrite = {
         WritePatient, WriteObservation, WriteCondition, WriteMedication, WriteProcedure
     };
-    
+
     /// <summary>
     /// Gets all system admin permissions
     /// </summary>
     public static string[] SystemAdminPermissions => new[] {
-        SystemAdmin, TenantAdmin, ProcessingRead, ProcessingWrite, 
+        SystemAdmin, TenantAdmin, ProcessingRead, ProcessingWrite,
         TelemetryRead, TelemetryWrite, FeedbackRead, FeedbackWrite,
         QueryExecute, QueryHistory, QueryAdmin
     }.Concat(AllFhirRead).Concat(AllFhirWrite).ToArray();
@@ -276,7 +276,7 @@ public static class Roles
     public const string Researcher = "Researcher";
     public const string DataAnalyst = "DataAnalyst";
     public const string ReadOnlyUser = "ReadOnlyUser";
-    
+
     /// <summary>
     /// Gets default permissions for a role
     /// </summary>

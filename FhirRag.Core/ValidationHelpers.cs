@@ -16,27 +16,27 @@ public static class ValidationHelpers
     {
         var validationResults = new List<ValidationResult>();
         var context = new ValidationContext(patient);
-        
+
         Validator.TryValidateObject(patient, context, validationResults, true);
-        
+
         // Additional business rule validations
         if (patient.BirthDate.HasValue && patient.BirthDate.Value > DateTime.Now)
         {
             validationResults.Add(new ValidationResult("Birth date cannot be in the future"));
         }
-        
+
         if (!IsValidGender(patient.Gender))
         {
             validationResults.Add(new ValidationResult("Invalid gender value"));
         }
-        
+
         return new FhirValidationResult
         {
             IsValid = !validationResults.Any(),
             Errors = validationResults.Select(vr => vr.ErrorMessage ?? "Unknown error").ToList()
         };
     }
-    
+
     /// <summary>
     /// Validates a FHIR observation model
     /// </summary>
@@ -44,27 +44,27 @@ public static class ValidationHelpers
     {
         var validationResults = new List<ValidationResult>();
         var context = new ValidationContext(observation);
-        
+
         Validator.TryValidateObject(observation, context, validationResults, true);
-        
+
         // Additional business rule validations
         if (observation.EffectiveDateTime.HasValue && observation.EffectiveDateTime.Value > DateTime.Now)
         {
             validationResults.Add(new ValidationResult("Effective date cannot be in the future"));
         }
-        
+
         if (observation.ValueDecimal.HasValue && observation.ValueDecimal.Value < 0)
         {
             validationResults.Add(new ValidationResult("Numeric values cannot be negative for most observations"));
         }
-        
+
         return new FhirValidationResult
         {
             IsValid = !validationResults.Any(),
             Errors = validationResults.Select(vr => vr.ErrorMessage ?? "Unknown error").ToList()
         };
     }
-    
+
     /// <summary>
     /// Validates a FHIR condition model
     /// </summary>
@@ -72,28 +72,28 @@ public static class ValidationHelpers
     {
         var validationResults = new List<ValidationResult>();
         var context = new ValidationContext(condition);
-        
+
         Validator.TryValidateObject(condition, context, validationResults, true);
-        
+
         // Additional business rule validations
         if (condition.OnsetDateTime.HasValue && condition.OnsetDateTime.Value > DateTime.Now)
         {
             validationResults.Add(new ValidationResult("Onset date cannot be in the future"));
         }
-        
-        if (condition.OnsetDateTime.HasValue && condition.AbatementDateTime.HasValue && 
+
+        if (condition.OnsetDateTime.HasValue && condition.AbatementDateTime.HasValue &&
             condition.AbatementDateTime.Value < condition.OnsetDateTime.Value)
         {
             validationResults.Add(new ValidationResult("Abatement date cannot be before onset date"));
         }
-        
+
         return new FhirValidationResult
         {
             IsValid = !validationResults.Any(),
             Errors = validationResults.Select(vr => vr.ErrorMessage ?? "Unknown error").ToList()
         };
     }
-    
+
     /// <summary>
     /// Validates terminology coding
     /// </summary>
@@ -101,7 +101,7 @@ public static class ValidationHelpers
     {
         if (string.IsNullOrWhiteSpace(coding.Code))
             return false;
-            
+
         // Validate common coding systems
         return coding.System switch
         {
@@ -111,18 +111,18 @@ public static class ValidationHelpers
             _ => true // Allow other systems
         };
     }
-    
+
     /// <summary>
     /// Validates SNOMED CT code format
     /// </summary>
     public static bool IsValidSnomedCode(string code)
     {
-        return !string.IsNullOrWhiteSpace(code) && 
-               code.All(char.IsDigit) && 
-               code.Length >= 6 && 
+        return !string.IsNullOrWhiteSpace(code) &&
+               code.All(char.IsDigit) &&
+               code.Length >= 6 &&
                code.Length <= 18;
     }
-    
+
     /// <summary>
     /// Validates LOINC code format
     /// </summary>
@@ -130,15 +130,15 @@ public static class ValidationHelpers
     {
         if (string.IsNullOrWhiteSpace(code))
             return false;
-            
+
         var parts = code.Split('-');
-        return parts.Length == 2 && 
-               parts[0].All(char.IsDigit) && 
+        return parts.Length == 2 &&
+               parts[0].All(char.IsDigit) &&
                parts[1].All(char.IsDigit) &&
                parts[0].Length >= 4 &&
                parts[1].Length == 1;
     }
-    
+
     /// <summary>
     /// Validates ICD-10 code format
     /// </summary>
@@ -146,13 +146,13 @@ public static class ValidationHelpers
     {
         if (string.IsNullOrWhiteSpace(code))
             return false;
-            
-        return code.Length >= 3 && 
-               code.Length <= 7 && 
+
+        return code.Length >= 3 &&
+               code.Length <= 7 &&
                char.IsLetter(code[0]) &&
                code.Skip(1).Take(2).All(char.IsDigit);
     }
-    
+
     /// <summary>
     /// Validates gender value
     /// </summary>
@@ -161,7 +161,7 @@ public static class ValidationHelpers
         var validGenders = new[] { "male", "female", "other", "unknown" };
         return validGenders.Contains(gender?.ToLowerInvariant());
     }
-    
+
     /// <summary>
     /// Validates tenant ID format
     /// </summary>
@@ -172,7 +172,7 @@ public static class ValidationHelpers
                tenantId.Length <= 50 &&
                tenantId.All(c => char.IsLetterOrDigit(c) || c == '-' || c == '_');
     }
-    
+
     /// <summary>
     /// Validates JSON serialization/deserialization
     /// </summary>
@@ -210,11 +210,11 @@ public class ValidFhirCodeAttribute : ValidationAttribute
     {
         if (value is Coding coding)
         {
-            return ValidationHelpers.IsValidCoding(coding) 
-                ? System.ComponentModel.DataAnnotations.ValidationResult.Success 
+            return ValidationHelpers.IsValidCoding(coding)
+                ? System.ComponentModel.DataAnnotations.ValidationResult.Success
                 : new System.ComponentModel.DataAnnotations.ValidationResult("Invalid FHIR coding format");
         }
-        
+
         return new System.ComponentModel.DataAnnotations.ValidationResult("Value must be a valid Coding object");
     }
 }
@@ -232,7 +232,7 @@ public class ValidTenantIdAttribute : ValidationAttribute
                 ? System.ComponentModel.DataAnnotations.ValidationResult.Success
                 : new System.ComponentModel.DataAnnotations.ValidationResult("Invalid tenant ID format");
         }
-        
+
         return new System.ComponentModel.DataAnnotations.ValidationResult("Tenant ID must be a valid string");
     }
 }

@@ -56,7 +56,7 @@ public class DynamoDbTelemetryService : BaseTelemetryService
     {
         ValidateSessionId(sessionId);
         ValidateTenantId(tenantId);
-        
+
         if (step == null)
             throw new ArgumentNullException(nameof(step));
 
@@ -90,13 +90,13 @@ public class DynamoDbTelemetryService : BaseTelemetryService
             }
 
             await StoreEntryAsync(telemetryEntry, cancellationToken);
-            
-            Logger.LogDebug("Recorded processing step {StepName} for session {SessionId} in tenant {TenantId}", 
+
+            Logger.LogDebug("Recorded processing step {StepName} for session {SessionId} in tenant {TenantId}",
                 step.Name, sessionId, tenantId);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error recording processing step {StepName} for session {SessionId}", 
+            Logger.LogError(ex, "Error recording processing step {StepName} for session {SessionId}",
                 step.Name, sessionId);
             throw;
         }
@@ -111,10 +111,10 @@ public class DynamoDbTelemetryService : BaseTelemetryService
         {
             var partitionKey = $"STEP#{tenantId}#{sessionId}";
             var queryFilter = new QueryFilter("PartitionKey", QueryOperator.Equal, partitionKey);
-            
+
             var search = _table.Query(queryFilter);
             var entries = new List<TelemetryEntry>();
-            
+
             do
             {
                 var documents = await search.GetNextSetAsync(cancellationToken);
@@ -122,7 +122,7 @@ public class DynamoDbTelemetryService : BaseTelemetryService
             } while (!search.IsDone);
 
             var steps = new List<ProcessingStep>();
-            
+
             foreach (var entry in entries.Where(e => e.EntryType == "ProcessingStep"))
             {
                 var step = new ProcessingStep
@@ -148,9 +148,9 @@ public class DynamoDbTelemetryService : BaseTelemetryService
                 steps.Add(step);
             }
 
-            Logger.LogDebug("Retrieved {StepCount} processing steps for session {SessionId}", 
+            Logger.LogDebug("Retrieved {StepCount} processing steps for session {SessionId}",
                 steps.Count, sessionId);
-            
+
             return steps.OrderBy(s => s.StartedAt);
         }
         catch (Exception ex)
@@ -198,8 +198,8 @@ public class DynamoDbTelemetryService : BaseTelemetryService
             }
 
             await StoreEntryAsync(telemetryEntry, cancellationToken);
-            
-            Logger.LogDebug("Recorded processing result for resource {ResourceId} in tenant {TenantId}", 
+
+            Logger.LogDebug("Recorded processing result for resource {ResourceId} in tenant {TenantId}",
                 result.ResourceId, result.TenantId);
         }
         catch (Exception ex)
@@ -212,7 +212,7 @@ public class DynamoDbTelemetryService : BaseTelemetryService
     public override async Task<ProcessingResult?> GetResultAsync(string resourceId, string tenantId, CancellationToken cancellationToken = default)
     {
         ValidateTenantId(tenantId);
-        
+
         if (string.IsNullOrWhiteSpace(resourceId))
             throw new ArgumentException("Resource ID cannot be null or empty", nameof(resourceId));
 
@@ -221,21 +221,21 @@ public class DynamoDbTelemetryService : BaseTelemetryService
             var partitionKey = $"RESULT#{tenantId}#{resourceId}";
             var queryFilter = new QueryFilter("PartitionKey", QueryOperator.Equal, partitionKey);
             queryFilter.AddCondition("SortKey", QueryOperator.BeginsWith, "RESULT#");
-            
+
             var search = _table.Query(queryFilter);
-            
+
             var documents = await search.GetNextSetAsync(cancellationToken);
             var entry = documents.FirstOrDefault();
-            
+
             if (entry == null)
             {
-                Logger.LogDebug("No processing result found for resource {ResourceId} in tenant {TenantId}", 
+                Logger.LogDebug("No processing result found for resource {ResourceId} in tenant {TenantId}",
                     resourceId, tenantId);
                 return null;
             }
 
             var telemetryEntry = TelemetryEntry.FromDocument(entry);
-            
+
             var result = new ProcessingResult
             {
                 ResourceId = telemetryEntry.Data.GetValueOrDefault("resource_id")?.ToString() ?? string.Empty,
@@ -259,7 +259,7 @@ public class DynamoDbTelemetryService : BaseTelemetryService
             }
 
             Logger.LogDebug("Retrieved processing result for resource {ResourceId}", resourceId);
-            
+
             return result;
         }
         catch (Exception ex)
@@ -273,10 +273,10 @@ public class DynamoDbTelemetryService : BaseTelemetryService
     {
         ValidateSessionId(sessionId);
         ValidateTenantId(tenantId);
-        
+
         if (string.IsNullOrWhiteSpace(userId))
             throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
-        
+
         if (string.IsNullOrWhiteSpace(feedback))
             throw new ArgumentException("Feedback cannot be null or empty", nameof(feedback));
 
@@ -301,8 +301,8 @@ public class DynamoDbTelemetryService : BaseTelemetryService
             };
 
             await StoreEntryAsync(telemetryEntry, cancellationToken);
-            
-            Logger.LogDebug("Recorded user feedback from {UserId} for session {SessionId} in tenant {TenantId}", 
+
+            Logger.LogDebug("Recorded user feedback from {UserId} for session {SessionId} in tenant {TenantId}",
                 userId, sessionId, tenantId);
         }
         catch (Exception ex)
@@ -324,11 +324,11 @@ public class DynamoDbTelemetryService : BaseTelemetryService
         }
 
         var serializedData = JsonSerializer.Serialize(data);
-        
+
         if (serializedData.Length > _configuration.MaxPayloadSizeBytes)
         {
             var s3Key = $"{entry.TenantId}/{entry.EntryType}/{DateTime.UtcNow:yyyy/MM/dd}/{Guid.NewGuid():N}.json";
-            
+
             await _s3Client.PutObjectAsync(new PutObjectRequest
             {
                 BucketName = _configuration.S3BucketName,
@@ -337,11 +337,11 @@ public class DynamoDbTelemetryService : BaseTelemetryService
                 ContentType = "application/json",
                 ServerSideEncryptionMethod = ServerSideEncryptionMethod.AES256
             }, cancellationToken);
-            
+
             entry.Data["s3_key"] = s3Key;
             entry.Data["data_size_bytes"] = serializedData.Length;
-            
-            Logger.LogDebug("Stored large telemetry data ({Size} bytes) in S3 at key {S3Key}", 
+
+            Logger.LogDebug("Stored large telemetry data ({Size} bytes) in S3 at key {S3Key}",
                 serializedData.Length, s3Key);
         }
         else
@@ -368,11 +368,11 @@ public class DynamoDbTelemetryService : BaseTelemetryService
 
             using var reader = new StreamReader(response.ResponseStream);
             var json = await reader.ReadToEndAsync(cancellationToken);
-            
+
             var data = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
-            
+
             Logger.LogDebug("Loaded large telemetry data from S3 key {S3Key}", s3Key);
-            
+
             return data;
         }
         catch (Exception ex)

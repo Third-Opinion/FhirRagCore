@@ -49,7 +49,7 @@ public class S3StorageService : IStorageService
             }
 
             var response = await _s3Client.PutObjectAsync(request, cancellationToken);
-            
+
             _logger.LogDebug("Successfully stored object {Key} in bucket {BucketName}", key, _configuration.BucketName);
             return response.HttpStatusCode == System.Net.HttpStatusCode.OK;
         }
@@ -72,12 +72,12 @@ public class S3StorageService : IStorageService
 
             using var response = await _s3Client.GetObjectAsync(request, cancellationToken);
             using var memoryStream = new MemoryStream();
-            
+
             await response.ResponseStream.CopyToAsync(memoryStream, cancellationToken);
             var data = memoryStream.ToArray();
-            
+
             _logger.LogDebug("Successfully retrieved object {Key} from bucket {BucketName}", key, _configuration.BucketName);
-            
+
             return data;
         }
         catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -103,7 +103,7 @@ public class S3StorageService : IStorageService
             };
 
             var response = await _s3Client.DeleteObjectAsync(request, cancellationToken);
-            
+
             _logger.LogDebug("Successfully deleted object {Key} from bucket {BucketName}", key, _configuration.BucketName);
             return response.HttpStatusCode == System.Net.HttpStatusCode.NoContent;
         }
@@ -184,7 +184,7 @@ public class S3StorageService : IStorageService
 
             var url = _s3Client.GetPreSignedURL(request);
             _logger.LogDebug("Generated presigned URL for object {Key} in bucket {BucketName}", key, _configuration.BucketName);
-            
+
             return Task.FromResult<string?>(url);
         }
         catch (Exception ex)
